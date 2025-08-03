@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Download } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 
@@ -38,11 +38,11 @@ export default function JenkinsfileGenerator() {
     file += `])\n`;
     file += `  }\n`;
 
-    file += `  triggers {\n`;
     if (pollSCM) {
-      file += `    pollSCM('')\n`;
+      file += `  triggers {\n`;
+      file += `    pollSCM('* * * * *')\n`;
+      file += `  }\n`;
     }
-    file += `  }\n`;
 
     file += `  options {\n`;
     file += `timestamps()\n`;
@@ -64,7 +64,7 @@ export default function JenkinsfileGenerator() {
     if (githubCreds.trim()) {
       file +=
         '        git branch: "${params.BRANCH_NAME}", ' +
-        `credentialsId: '${githubCreds}', url: '${gitRepo}'\n`;
+        `credentialsId: '${githubCreds}', url: 'https://github.com/dzakyadlh/test.git'\n`;
     } else {
       file +=
         '        git branch: "${params.BRANCH_NAME}", ' + `url: '${gitRepo}'\n`;
@@ -74,7 +74,13 @@ export default function JenkinsfileGenerator() {
 
     file += `    stage('Build') {\n`;
     file += `      steps {\n`;
-    file += `        sh '''\n${buildCommand}\n'''\n`;
+    file += `        script {\n`;
+    file += `          if (isUnix()) {\n`;
+    file += `            sh '''\n${buildCommand}\n'''\n`;
+    file += `          } else {\n`;
+    file += `            bat '''\n${buildCommand}\n'''\n`;
+    file += `          }\n`;
+    file += `        }\n`;
     file += `      }\n`;
     file += `    }\n`;
 
@@ -125,7 +131,10 @@ export default function JenkinsfileGenerator() {
   return (
     <div className="max-w-3xl mx-auto p-4 space-y-6">
       <Card>
-        <CardContent className="space-y-4 pt-6">
+        <CardContent className="space-y-4">
+          <CardTitle className="text-xl font-semibold mb-5">
+            Jenkins Pipeline Generator{' '}
+          </CardTitle>
           <Label htmlFor="name">Name</Label>
           <Input
             id="name"
@@ -155,7 +164,7 @@ export default function JenkinsfileGenerator() {
           </Label>
           <Input
             id="githubCredentials"
-            placeholder="GitHub credentials ID"
+            placeholder="Git credentials ID"
             value={githubCreds}
             onChange={(e) => setGithubCreds(e.target.value)}
           />
